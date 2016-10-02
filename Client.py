@@ -5,7 +5,7 @@ Author:     mpsk
 Date:       2016-10-02
 Function:   Client for 
             Remote Connection via Proxy Server in TCP/IP Socket
-Version:    1.0.1
+Version:    1.0.2
 '''
 import socket
 import time
@@ -31,19 +31,21 @@ class session(object):
             cmd=raw_input("Please input cmd:")
             if(cmd=='quit!'):
                 print 'Stopped!' 
+                return False
             else:
                 self.sock.sendall(cmd)      
                 data=self.sock.recv(1024)     
                 print data
+                return True
     def shutserver(self):self.sock.send('quit!')
     def close(self): self.sock.close
 
 ip = raw_input("Please input IP Address:")
-port = raw_input("Please input Port:")
+port = int(raw_input("Please input Port:"))
 b = session(target(ip, port))
 while(True):
     b.connect()
-    b.command()
+    if(not b.command()):break
     b = session(target(ip, port))
 b.close()
 '''

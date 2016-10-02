@@ -5,7 +5,7 @@ Author:     mpsk
 Date:       2016-10-02
 Function:   Server for 
             Remote Connection via Proxy Server in TCP/IP Socket
-Version:    1.0.1
+Version:    1.0.2
 '''
 import socket
 import time
@@ -46,9 +46,10 @@ class server(object):
     def close(self):self.sock.close()
 
 ip = raw_input("Please input IP Address:")
-port = raw_input("Please input Port:")
+port = int(raw_input("Please input Port:"))
 a = server(target(ip, port))
 a.bind()
+print "\nServer Established!"
 a.listen()
 a.close()
 '''
