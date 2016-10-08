@@ -1,17 +1,15 @@
 #!/usr/bin/python
-##coding = utf-8
+#coding:utf-8
 '''
 Author:     mpsk
-Date:       2016-10-02
+Date:       2016-10-06
 Function:   Server for 
             Remote Connection via Proxy Server in TCP/IP Socket
-Version:    1.0.2
+Version:    1.0.3
 '''
 import socket
 import time
 import SocketServer
-import commands
-import os
 
 class target(object):
     def __init__(self, ip, port):
@@ -21,36 +19,41 @@ class target(object):
 class server(object):
     def __init__(self, target):
         self.target = target
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.msglist = []
+        self.sockc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     def bind(self):
-        self.sock.bind((self.target.ip, self.target.port))
-    def listen(self):
-        self.sock.listen(5)
+        self.sockc.bind((self.target.ip, self.target.port))
+    def listenc(self):
+        self.sockc.listen(5)
         while (True):
-            conn,addr=self.sock.accept() 
+            conn,addr=self.sockc.accept() 
             print'Connected by',addr    
             try:
                 conn.settimeout(300)
                 data=conn.recv(1024)
                 if(data=='quit!'):break
-                else:##os.system(cmd) 
-                
-                    cmd_status,cmd_result=commands.getstatusoutput(data)   
-                if len(cmd_result.strip())==0:   
-                    conn.sendall('Done.')
                 else:
-                    conn.sendall(cmd_result)
-                
+                    recv = data[0:8]
+                    send = data[8:16]
+                    #这里留下一位末位
+                    msg =data[16:-1]
+                    if(send != '00000000' and msg !=''):
+                        self.msglist.append([recv,send,msg])
+                    else:
+                        #在接受者栈中寻找
+                        for i in range(len(self.msglist)):
+                            if(self.msglist[i][0]==recv):
+                                conn.sendall('00000000' + self.msglist[i][1] + self.msglist[i][2])
+                                self.msglist.pop(i)
             except socket.error:
                 print 'socket time out!'
-    def close(self):self.sock.close()
+    def close(self):
+        self.sockc.close()
 
-ip = raw_input("Please input IP Address:")
-port = int(raw_input("Please input Port:"))
-a = server(target(ip, port))
+a = server(target('localhost', 65530))
 a.bind()
 print "\nServer Established!"
-a.listen()
+a.listenc()
 a.close()
 '''
 def init():
