@@ -2,10 +2,10 @@
 ##coding=utf-8
 '''
 Author:     mpsk
-Date:       2016-10-06
+Date:       2016-10-09
 Function:   Client for 
             Remote Connection via Proxy Server in TCP/IP Socket
-Version:    1.0.3
+Version:    1.0.4
 '''
 import socket
 import time
@@ -36,12 +36,13 @@ class client(object):
             return False
         elif(msg=='' or target_name =='00000000' or len(target_name)!=8):
             print 'invalid input!'
+            return False
         else:
             #这里信息应该是8(发送者名字)+8(接收者名字)+1007(消息)+1(末位)那么长
             #返回的信息应该只有200 401 402 403 404 501 502
             #                   接受者名字   发送者名字 消息
-            self.sock.sendall(target_name + self.myname + msg)      
-            data = self.sock.recv(1008)    
+            if(msg!=''):self.sock.sendall(target_name + self.myname + msg)      
+            data = self.sock.recv(8)    
             print data
             return True
     def request(self):
@@ -56,23 +57,31 @@ class client(object):
     def close(self): self.sock.close
 
 
-ip = raw_input("Please input IP Address:")
-port = int(raw_input("Please input Port:"))
+#ip = raw_input("Please input IP Address:")
+#port = int(raw_input("Please input Port:"))
 name = raw_input("Please input your name: (8 letters only)")
 while(len(name)!=8 or name == '00000000'):
     print 'invalid input!'
     name = raw_input("Please input your name: (8 letters only)")
-post = client(target(ip, port), name)
-req = client(target(ip, port), name)
+#post = client(target(ip, port), name)
+#req = client(target(ip, port), name)
+flag = int(raw_input("'0' for recieve!:"))
+post = client(target('localhost', 65530), name)
+#req = client(target('localhost', 65530), name)
 while(True):
     post.connect()
-    req.connect()
-    if(not post.post()):break
-    if(not req.request()):break
-    post = client(target(ip, port), name)
-    req = client(target(ip, port), name)
+    #req.connect()
+    if(flag):
+        if(not post.post()):break
+    else:
+        if(not post.request()):break
+    #if(not req.request()):break
+    flag = int(raw_input("'0' for recieve!:"))
+    post.close()
+    post = client(target('localhost', 65530), name)
+    #req = client(target(ip, port), name)
 post.close()
-req.close()
+#req.close()
 
 
 '''

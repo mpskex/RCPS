@@ -2,10 +2,10 @@
 #coding:utf-8
 '''
 Author:     mpsk
-Date:       2016-10-06
+Date:       2016-10-09
 Function:   Server for 
             Remote Connection via Proxy Server in TCP/IP Socket
-Version:    1.0.3
+Version:    1.0.4
 '''
 import socket
 import time
@@ -19,7 +19,7 @@ class target(object):
 class server(object):
     def __init__(self, target):
         self.target = target
-        self.msglist = []
+        self.msglist = ['null']
         self.sockc = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     def bind(self):
         self.sockc.bind((self.target.ip, self.target.port))
@@ -36,15 +36,19 @@ class server(object):
                     recv = data[0:8]
                     send = data[8:16]
                     #这里留下一位末位
-                    msg =data[16:-1]
+                    msg = data[16:-1] + data[-1]
                     if(send != '00000000' and msg !=''):
                         self.msglist.append([recv,send,msg])
+                        print 'from ' + send + ' to ' + recv + ' : ' + msg
+                        print self.msglist
+                        conn.sendall('200')
                     else:
                         #在接受者栈中寻找
                         for i in range(len(self.msglist)):
                             if(self.msglist[i][0]==recv):
                                 conn.sendall('00000000' + self.msglist[i][1] + self.msglist[i][2])
                                 self.msglist.pop(i)
+                                print self.msglist
             except socket.error:
                 print 'socket time out!'
     def close(self):
