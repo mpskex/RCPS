@@ -2,10 +2,10 @@
 ##coding=utf-8
 '''
 Author:     mpsk
-Date:       2016-10-09
+Date:       2016-10-10
 Function:   Client for 
             Remote Connection via Proxy Server in TCP/IP Socket
-Version:    1.0.4
+Version:    1.0.5
 '''
 import socket
 import time
@@ -30,6 +30,8 @@ class client(object):
         else: print "failed to connect!"
     def post(self):
         target_name = raw_input("Please input target's name:")
+        while(len(target_name)!=8 or target_name == '00000000'):
+            target_name = raw_input("Please input target's name:")
         msg = raw_input("Please input msg:(type 'quit!' to exit)")
         if(msg=='quit!'):
             print 'Stopped!' 
@@ -48,7 +50,10 @@ class client(object):
     def request(self):
         self.sock.sendall(self.myname + '00000000')      
         data = self.sock.recv(1008)     
-        print data[8:16] + ' : ' + data[16:-1] + data[-1]
+        if(data!='404'):
+            print data[8:16] + ' : ' + data[16:-1] + data[-1]
+        else:
+            print 'No message found!'
         if(data !=''):
             return True
         else:

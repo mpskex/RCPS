@@ -2,10 +2,10 @@
 #coding:utf-8
 '''
 Author:     mpsk
-Date:       2016-10-09
+Date:       2016-10-10
 Function:   Server for 
             Remote Connection via Proxy Server in TCP/IP Socket
-Version:    1.0.4
+Version:    1.0.5
 '''
 import socket
 import time
@@ -49,6 +49,9 @@ class server(object):
                                 conn.sendall('00000000' + self.msglist[i][1] + self.msglist[i][2])
                                 self.msglist.pop(i)
                                 print self.msglist
+                                break
+                        print 'No Message for ' + recv
+                        conn.sendall('404')
             except socket.error:
                 print 'socket time out!'
     def close(self):
@@ -56,7 +59,7 @@ class server(object):
 
 a = server(target('localhost', 65530))
 a.bind()
-print "\nServer Established!"
+print "Server Established!"
 a.listenc()
 a.close()
 '''
