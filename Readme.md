@@ -2,6 +2,7 @@
 就是能够连接在NAT转发环境下无DNS解析的主机。
 由于NAT转发下的主机没有办法通过外网ip直连，所以代理模式必须使用主动模式。
 我简单说一下大概思路：
+#序列图
 ```sequence
 Client-->Proxy: 建立连接并发送句柄
 Note left of Server:如果没有客户端的句柄\n那么就继续获取
@@ -11,45 +12,25 @@ Note right of Client:此时客户端等待服务器\n直到其返回代码
 Server-->Proxy:	返回结果
 Proxy-->Client:	返回结果
 ```
-接下来分别分析一下客户端和目标端的流程：
-#客户端：
-```flow
-st=>start: 开始
-e=>end: 结束
-input=>operation: 用户输入
-send=>operation: 发送指令
-wait=>operation: 等待
-output=>operation: 输出结果
-resp=>condition: 判断有无响应&&无超时
-cont=>condition: 是否有输出？
-quit=>condition: 判断退出
-
-st->input->send->wait->resp
-resp(yes)->cont
-resp(no)->wait
-cont(yes)->output->quit
-cont(no)->send
-quit(yes)->e
-quit(no)->input
+经过我这榆木脑袋些许的思考以后，我发现其实客户端和服务端相对代理端来说都是对等的。也就是说，我们在抽象模型的时候只需要抽象被代理端和代理端就可以了。
+其实可以这样抽象：
+```sequence
+Server-->Proxy:	建立连接并请求句柄
+Proxy-->Server:	返回响应但没有句柄
+Client-->Proxy: 建立连接并发送句柄
+Proxy-->Client: 返回响应成功代码（200）
+Note left of Client:此时客户端等待服务器响应\n客户端在等待时一直请求代理端\n请求来自服务器端的信息
+Client-->Proxy: 建立连接并请求句柄
+Proxy-->Client: 返回响应但没有句柄
+Server-->Proxy:	建立连接并请求句柄
+Proxy-->Server:	返回响应并返回句柄
+Note right of Server: 此时服务器端的行为和客户端对调\n这就是为什么我会说两端可以看度对等的
+Server-->Proxy:	建立连接并发送句柄
+Proxy-->Server:	返回响应成功代码（200）
+Client-->Proxy:	建立连接并请求句柄
+Proxy-->Client:	返回响应并返回句柄
+Note left of Client:此时客户端获得了句柄\n会话告一段落
 ```
-#目标端：
-```flow
-start=>start: start
-end=>end: end
-init=>operation: 初始化
-get=>operation: 获取语句
-Qget=>condition: 判断是否获取语句
-do=>operation: 执行语句并取得返回值
-return=>operation: 返回语句返回值
-quit=>condition: 判断退出?
-
-
-start->init->get->Qget->end
-Qget(yes)->do->return->quit
-Qget(no)->get
-quit(yes)->end
-quit(no)->get
-```
-
-就先写这么多，其他的日后再补
-目前这个设计没有加入代理端，日后再来更
+从此看出，服务器与客户端唯一的区别是，服务器端是一直向代理服务器请求句柄，直到接收到代理端发来来自客户端的句柄并执行发送结果之后，继续进入请求状态；而客户端是发送指令后才进入请求状态，直到受到了来自服务端的结果。
+这样看来，这个模型会导致很多代理端和服务器端资源的浪费。我只是在这里提供这么一种方法。对于目前在NAT环境下的我来说，这算是一种妥协的方法。现在的DDNS能够突破的厂商只有*生壳了吧，一年内网版价格不是很便宜。我是因为朋友有一个海外云主机，所以想到了这么一种解决办法。谁也不能说某种方法就是低效的，也要看在不同应用条件下，才能客观的评价一种方案的可行性。
+源码基于Python，[点击这里](https://github.com/mpskex/RCPS)查看源码，可以顺便fo我一下哈哈哈 :P
